@@ -180,7 +180,7 @@ export const submitQuiz = async (req, res) => {
       
       return {
         questionId: question._id,
-        selectedAnswer: selectedOptionId,
+        selectedOptionId: selectedOptionId,
         isCorrect: !!isCorrect
       };
     });
@@ -190,11 +190,15 @@ export const submitQuiz = async (req, res) => {
       quizId: quiz._id,
       score,
       totalQuestions: quiz.questions.length,
-      answers: answerDetails
+      answers: answerDetails.map(a => ({
+        questionId: a.questionId,
+        selectedAnswer: a.selectedOptionId,
+        isCorrect: a.isCorrect
+      }))
     });
 
     await attempt.save();
-    res.json({ score, total: quiz.questions.length, answers: answerDetails });
+    res.json({ score, totalQuestions: quiz.questions.length, answers: answerDetails });
   } catch (error) {
     res.status(500).json({ error: 'Failed to submit quiz' });
   }

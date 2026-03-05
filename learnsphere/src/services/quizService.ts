@@ -23,9 +23,38 @@ export const QUIZ_CATEGORIES: QuizCategory[] = [
   'Other',
 ];
 
-// Helper to map MongoDB _id to frontend id
-const mapQuizId = (q: any): Quiz => ({ ...q, id: q.id || q._id });
-const mapAttemptId = (a: any): QuizAttempt => ({ ...a, id: a.id || a._id });
+// Helper to map MongoDB _id to frontend id recursively
+const mapQuizId = (q: any): Quiz => {
+  if (!q) return q;
+  return { 
+    ...q, 
+    id: q.id || q._id,
+    questions: (q.questions || []).map((quest: any) => ({
+      ...quest,
+      id: quest.id || quest._id?.toString(),
+      correctOptionId: quest.correctOptionId?.toString(),
+      options: (quest.options || []).map((opt: any) => ({
+        ...opt,
+        id: opt.id || opt._id?.toString()
+      }))
+    }))
+  };
+};
+
+const mapAttemptId = (a: any): QuizAttempt => {
+  if (!a) return a;
+  return { 
+    ...a, 
+    id: a.id || a._id?.toString(),
+    // Normalize backend fields to frontend expectations
+    totalQuestions: a.totalQuestions || a.total,
+    answers: (a.answers || []).map((ans: any) => ({
+      ...ans,
+      questionId: ans.questionId?.toString(),
+      selectedOptionId: (ans.selectedOptionId || ans.selectedAnswer)?.toString()
+    }))
+  };
+};
 
 // Get all published quizzes for candidates
 export const getAvailableQuizzes = async (): Promise<Quiz[]> => {

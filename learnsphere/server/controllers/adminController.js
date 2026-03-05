@@ -47,7 +47,7 @@ export const getQuizzes = async (req, res) => {
 export const updateQuiz = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, category, description, isPublished, questions } = req.body;
+    const { title, category, description, isPublished, maxAttempts, questions } = req.body;
 
     const quiz = await Quiz.findById(id);
 
@@ -65,7 +65,7 @@ export const updateQuiz = async (req, res) => {
     if (category !== undefined) updateData.category = category;
     if (description !== undefined) updateData.description = description;
     if (isPublished !== undefined) updateData.isPublished = isPublished;
-    if (maxAttempts !== undefined) updateData.maxAttempts = maxAttempts;
+    if (req.body.maxAttempts !== undefined) updateData.maxAttempts = req.body.maxAttempts;
 
     // Handle questions update
     if (questions && Array.isArray(questions)) {
