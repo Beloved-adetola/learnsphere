@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Layout from "./components/layout/Layout";
 
-// Public pages
+// Public pages routes
 import Landing from "./pages/Landing";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
