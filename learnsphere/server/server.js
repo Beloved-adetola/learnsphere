@@ -39,7 +39,7 @@ console.log("Loaded FIREBASE_SERVICE_ACCOUNT:", !!process.env.FIREBASE_SERVICE_A
 const app = express();
 
 const corsOptions = {
-  origin: 'http://localhost:5173' || "https://learnsphere-beta-ten.vercel.app", // Your Vite frontend origin
+  origin: "https://learnsphere-beta-ten.vercel.app", // Your Vite frontend origin
   optionsSuccessStatus: 200
 };
 
