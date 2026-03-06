@@ -39,14 +39,22 @@ console.log("Loaded FIREBASE_SERVICE_ACCOUNT:", !!process.env.FIREBASE_SERVICE_A
 const app = express();
 
 const corsOptions = {
-  origin: process.env.FRONTEND_URL,
+  origin: (origin, callback) => {
+    const allowedOrigin = process.env.FRONTEND_URL || "https://learnsphere-beta-ten.vercel.app";
+    // Allow requests with no origin (like mobile apps or curl) 
+    // or if the origin matches (with or without trailing slash)
+    if (!origin || origin.replace(/\/$/, '') === allowedOrigin.replace(/\/$/, '')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
 
 // Middleware
-app.use(cors());
 app.use(express.json());
 
 // Database Connection
