@@ -1,14 +1,21 @@
+import dotenv from "dotenv";
 import admin from "firebase-admin";
-import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+dotenv.config();
 
-const serviceAccount = JSON.parse(
-  readFileSync(join(__dirname, "serviceAccountKey.json"))
-);
+const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+
+if (!raw) {
+  throw new Error(
+    "FIREBASE_SERVICE_ACCOUNT is missing. Check your .env file and make sure dotenv is loading."
+  );
+}
+
+const serviceAccount = JSON.parse(raw);
+
+if (serviceAccount.private_key) {
+  serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),

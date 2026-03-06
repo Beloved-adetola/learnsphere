@@ -28,15 +28,18 @@ import connectDB from './config/db.js';
 import adminRoutes from './routes/admin.js';
 import candidateRoutes from './routes/candidate.js';
 import './config/firebase-admin.js';
-import 'dotenv/config';
 import userRoutes from './routes/user.js';
+import dotenv from "dotenv";
 
 
+dotenv.config();
+
+console.log("Loaded FIREBASE_SERVICE_ACCOUNT:", !!process.env.FIREBASE_SERVICE_ACCOUNT);
 
 const app = express();
 
 const corsOptions = {
-  origin: 'http://localhost:5173', // Your Vite frontend origin
+  origin: 'http://localhost:5173' || "https://learnsphere-beta-ten.vercel.app", // Your Vite frontend origin
   optionsSuccessStatus: 200
 };
 
