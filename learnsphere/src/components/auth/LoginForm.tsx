@@ -9,6 +9,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { Auth } from '@/config/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
+import { API_BASE_URL } from '@/config/api';
+
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -23,7 +25,7 @@ const LoginForm: React.FC = () => {
     try {
       await signInWithEmailAndPassword(Auth, email, password);
       const token = await Auth.currentUser?.getIdToken();
-      const res = await fetch("http://localhost:5000/api/user/profile", {
+      const res = await fetch(`${API_BASE_URL}/user/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

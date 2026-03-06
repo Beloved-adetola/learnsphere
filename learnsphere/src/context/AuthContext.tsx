@@ -3,6 +3,8 @@ import { User, Organization } from '../types';
 import { Auth } from '@/config/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
+import { API_BASE_URL } from '@/config/api';
+
 // This is a placeholder that would be replaced with Firebase Auth
 interface AuthContextType {
   currentUser: User | null;
@@ -33,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // fetch user role from our backend 
           // Note context runs early, wrap in try/catch in case backend isn't up
-          const res = await fetch("http://localhost:5000/api/user/profile", {
+          const res = await fetch(`${API_BASE_URL}/user/profile`, {
             headers: {
               Authorization: `Bearer ${token}`
             }

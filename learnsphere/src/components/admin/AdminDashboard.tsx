@@ -11,6 +11,7 @@ import { getQuizzes } from "@/services/quizService";
 import AdminQuizList from "./AdminQuizList";
 import CreateQuizForm from "./CreateQuizForm";
 import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/config/api";
 
 const AdminDashboard: React.FC = () => {
   const { currentUser } = useAuth();
@@ -33,7 +34,7 @@ const AdminDashboard: React.FC = () => {
         const idToken = await Auth.currentUser?.getIdToken();
         const [data, profileRes] = await Promise.all([
           getQuizzes(),
-          fetch("http://localhost:5000/api/user/profile", {
+          fetch(`${API_BASE_URL}/user/profile`, {
             headers: {
               "Authorization": `Bearer ${idToken}`
             }
@@ -121,7 +122,7 @@ const AdminDashboard: React.FC = () => {
     setIsSavingCode(true);
     try {
       const idToken = await Auth.currentUser?.getIdToken();
-      const res = await fetch("http://localhost:5000/api/user/profile/code", {
+      const res = await fetch(`${API_BASE_URL}/user/profile/code`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

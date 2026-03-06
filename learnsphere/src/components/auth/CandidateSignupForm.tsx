@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Auth } from "@/config/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { API_BASE_URL } from "@/config/api";
 
 const CandidateSignupForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -40,7 +41,7 @@ const CandidateSignupForm: React.FC = () => {
     try {
       const userCredential = await createUserWithEmailAndPassword(Auth, email, password)
       const token = await userCredential.user.getIdToken();
-      const res = await fetch("http://localhost:5000/api/user/register", {
+      const res = await fetch(`${API_BASE_URL}/user/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
