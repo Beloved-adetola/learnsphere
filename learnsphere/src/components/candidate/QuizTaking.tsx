@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, Clock, Lock } from 'lucide-react';
 import { Quiz, QuizAttempt } from '@/types';
 import { getQuizById, submitQuizAttempt } from '@/services/quizService';
 import { useAuth } from '@/context/AuthContext';
@@ -35,10 +35,12 @@ const QuizTaking: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [quizResult, setQuizResult] = useState<QuizAttempt | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [isTimeUp, setIsTimeUp] = useState(false);
   
   // Organization Code Gateway
   const [isCodeVerified, setIsCodeVerified] = useState(false);
-  const [orgCode, setOrgCode] = useState('');
+  const [quizPassword, setQuizPassword] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   
   // Initial load is just finishing "loading" state since we defer fetching until code entry
@@ -46,74 +48,26 @@ const QuizTaking: React.FC = () => {
     setLoading(false);
   }, []);
   
-  const handleVerifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!quizId || !orgCode.trim()) return;
-    
-    setIsVerifying(true);
-    try {
-      const quizData = await getQuizById(quizId, orgCode);
-      if (!quizData) {
-        toast({
-          variant: 'destructive',
-          title: 'Quiz not found',
-          description: 'The requested quiz could not be found.',
-        });
-        navigate('/candidate/dashboard');
-        return;
-      }
-      
-      setQuiz(quizData);
-      setIsCodeVerified(true);
-    } catch (error) {
-      if (error instanceof Error && error.message === 'invalid_code') {
-        toast({
-          variant: 'destructive',
-          title: 'Access Denied',
-          description: 'Invalid or missing organization code for this quiz.',
-        });
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to access the quiz. Please try again.',
-        });
-      }
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-  
-  const handleOptionSelect = (questionId: string, optionId: string) => {
-    if (!questionId) {
-      console.error("QuizTaking: Cannot select option, questionId is missing");
-      return;
-    }
-    console.log(`QuizTaking: Selecting option ${optionId} for question ${questionId}`);
-    setSelectedOptions(prev => ({
-      ...prev,
-      [questionId]: optionId,
-    }));
-  };
-  
-  const handleNext = () => {
-    if (!quiz) return;
-    
-    if (currentQuestionIndex < quiz.questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    } else {
-      // On last question, show submit dialog
-      setShowSubmitDialog(true);
-    }
-  };
-  
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-    }
-  };
-  
-  const handleSubmit = async () => {
+  // Timer countdown logic
+  useEffect(() => {
+    if (timeLeft === null || timeLeft <= 0 || quizResult || !isCodeVerified) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev !== null && prev <= 1) {
+          clearInterval(timer);
+          setIsTimeUp(true);
+          return 0;
+        }
+        return prev !== null ? prev - 1 : null;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft, quizResult, isCodeVerified]);
+
+  // Stable handleSubmit to avoid stale closures
+  const handleSubmit = React.useCallback(async () => {
     if (!quiz || !currentUser) return;
     
     setIsSubmitting(true);
@@ -153,7 +107,93 @@ const QuizTaking: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+  }, [quiz, currentUser, selectedOptions, toast]);
+
+  // Handle auto-submit when time is up
+  useEffect(() => {
+    if (isTimeUp && !quizResult && !isSubmitting) {
+      toast({
+        variant: 'destructive',
+        title: "Time's up!",
+        description: "Your quiz is being submitted automatically.",
+      });
+      handleSubmit();
+    }
+  }, [isTimeUp, quizResult, isSubmitting, handleSubmit, toast]);
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quizId || !quizPassword.trim()) return;
+    
+    setIsVerifying(true);
+    try {
+      const quizData = await getQuizById(quizId, quizPassword);
+      if (!quizData) {
+        toast({
+          variant: 'destructive',
+          title: 'Quiz not found',
+          description: 'The requested quiz could not be found.',
+        });
+        navigate('/candidate/dashboard');
+        return;
+      }
+      
+      setQuiz(quizData);
+      setIsCodeVerified(true);
+      
+      // Initialize timer if limit exists
+      if (quizData.timeLimit > 0) {
+        setTimeLeft(quizData.timeLimit * 60);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === 'invalid_code') {
+        toast({
+          variant: 'destructive',
+          title: 'Access Denied',
+          description: 'Invalid or missing quiz password.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to access the quiz. Please try again.',
+        });
+      }
+    } finally {
+      setIsVerifying(false);
+    }
   };
+  
+  const handleOptionSelect = React.useCallback((questionId: string, optionId: string) => {
+    if (!questionId) {
+      console.error("QuizTaking: Cannot select option, questionId is missing");
+      return;
+    }
+    console.log(`QuizTaking: Selecting option ${optionId} for question ${questionId}`);
+    setSelectedOptions(prev => ({
+      ...prev,
+      [questionId]: optionId,
+    }));
+  }, []);
+  
+  const handleNext = () => {
+    if (!quiz) return;
+    
+    if (currentQuestionIndex < quiz.questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    } else {
+      // On last question, show submit dialog
+      setShowSubmitDialog(true);
+    }
+  };
+  
+  const handlePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
+  };
+  
+  // Original handleSubmit removed from here as it's now defined above with useCallback
   
   if (loading) {
     return (
@@ -177,23 +217,26 @@ const QuizTaking: React.FC = () => {
         </Button>
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Quiz Locked</CardTitle>
+            <div className="flex items-center gap-2 mb-2">
+              <Lock className="h-5 w-5 text-primary" />
+              <CardTitle className="text-2xl">Quiz Password Required</CardTitle>
+            </div>
             <CardDescription>
-              This is a private quiz. Enter the organization code provided by your instructor to access it.
+              This is a private quiz. Enter the password provided by your instructor to access it.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form id="verify-code-form" onSubmit={handleVerifyCode} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="orgCode">Organization Code</Label>
+                <Label htmlFor="quizPassword">Password</Label>
                 <div className="flex gap-2">
                   <input
-                    id="orgCode"
-                    type="text"
+                    id="quizPassword"
+                    type="password"
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Enter code (e.g. MATH101)"
-                    value={orgCode}
-                    onChange={(e) => setOrgCode(e.target.value)}
+                    placeholder="Enter quiz password"
+                    value={quizPassword}
+                    onChange={(e) => setQuizPassword(e.target.value)}
                     required
                   />
                 </div>
@@ -205,7 +248,7 @@ const QuizTaking: React.FC = () => {
               type="submit" 
               form="verify-code-form" 
               className="w-full"
-              disabled={isVerifying || !orgCode.trim()}
+              disabled={isVerifying || !quizPassword.trim()}
             >
               {isVerifying ? 'Verifying...' : 'Access Quiz'}
             </Button>
@@ -304,6 +347,30 @@ const QuizTaking: React.FC = () => {
           </div>
           <Progress value={progress} className="h-2" />
         </div>
+
+        {timeLeft !== null && !quizResult && (
+          <Card className={`mt-4 border-none shadow-md ${timeLeft < 60 ? 'bg-red-50' : 'bg-primary/5'}`}>
+            <CardContent className="p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className={`h-5 w-5 ${timeLeft < 60 ? 'text-red-500 animate-pulse' : 'text-primary'}`} />
+                  <span className={`font-mono text-xl font-bold ${timeLeft < 60 ? 'text-red-600' : 'text-primary'}`}>
+                    {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                  </span>
+                </div>
+                <div className="flex-grow mx-4">
+                  <Progress 
+                    value={(timeLeft / (quiz.timeLimit * 60)) * 100} 
+                    className={`h-2 ${timeLeft < 60 ? '[&>div]:bg-red-500' : ''}`}
+                  />
+                </div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Time Remaining
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
       
       <Card className="mb-6">

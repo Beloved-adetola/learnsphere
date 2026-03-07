@@ -46,27 +46,7 @@ router.get("/profile", authenticate, (req, res) => {
     uid: req.user.uid,
     email: req.user.email,
     role: req.user.role,
-    organizationCode: req.user.organizationCode || "",
   });
-});
-
-router.put("/profile/code", authenticate, async (req, res) => {
-  try {
-    const { code } = req.body;
-    console.log("Saving organization code:", code, "for user:", req.user.uid, "role:", req.user.role);
-    
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ error: "Only admins can set an organization code" });
-    }
-    
-    req.user.organizationCode = code;
-    await req.user.save();
-    console.log("Successfully saved code to MongoDB");
-    
-    res.json({ message: "Organization code updated successfully", code });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 });
 
 export default router;

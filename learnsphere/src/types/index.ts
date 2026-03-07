@@ -4,7 +4,6 @@ export interface User {
   email: string;
   role: 'admin' | 'candidate';
   name?: string;
-  organizationCode?: string;
 }
 
 export interface Organization {
@@ -36,6 +35,8 @@ export interface Quiz {
   updatedAt?: Date;
   isPublished: boolean;
   maxAttempts: number;
+  timeLimit: number; // in minutes
+  password?: string; // Optional on client unless we need to show it to admin
   userAttemptCount?: number;
 }
 
@@ -45,7 +46,7 @@ export interface QuizAttempt {
   userId: string;
   answers: {
     questionId: string;
-    selectedOptionId: string;
+    selectedOptionId: string | null;
   }[];
   score: number;
   totalQuestions: number;

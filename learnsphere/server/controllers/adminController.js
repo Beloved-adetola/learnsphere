@@ -4,7 +4,7 @@ import admin from "firebase-admin";
 
 export const createQuiz = async (req, res) => {
   try {
-    const { title, description, category, isPublished, maxAttempts, questions } = req.body;
+    const { title, description, category, isPublished, maxAttempts, timeLimit, password, questions } = req.body;
     
     const newQuiz = new Quiz({
       title,
@@ -12,6 +12,8 @@ export const createQuiz = async (req, res) => {
       category,
       isPublished,
       maxAttempts: maxAttempts || 0,
+      timeLimit: timeLimit || 0,
+      password,
       createdBy: req.user.uid,
     });
 
@@ -66,6 +68,8 @@ export const updateQuiz = async (req, res) => {
     if (description !== undefined) updateData.description = description;
     if (isPublished !== undefined) updateData.isPublished = isPublished;
     if (req.body.maxAttempts !== undefined) updateData.maxAttempts = req.body.maxAttempts;
+    if (req.body.timeLimit !== undefined) updateData.timeLimit = req.body.timeLimit;
+    if (req.body.password !== undefined) updateData.password = req.body.password;
 
     // Handle questions update
     if (questions && Array.isArray(questions)) {

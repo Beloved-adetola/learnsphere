@@ -45,8 +45,17 @@ const QuizResult: React.FC<QuizResultProps> = ({ quiz, attempt }) => {
   };
   
   const getSelectedOption = (questionId: string) => {
-    const answer = attempt.answers.find(a => a.questionId === questionId);
-    return answer ? answer.selectedOptionId : null;
+    interface LegacyAnswer {
+      questionId?: string;
+      selectedOptionId?: string;
+      selectedAnswer?: string;
+    }
+    const answer = attempt.answers.find(a => {
+      const legacy = a as unknown as LegacyAnswer;
+      return (legacy.questionId || '').toString() === questionId.toString();
+    });
+    const legacyAnswer = answer as unknown as LegacyAnswer;
+    return legacyAnswer ? (legacyAnswer.selectedOptionId || legacyAnswer.selectedAnswer) : null;
   };
   
   const isMaxAttemptsReached = quiz.maxAttempts > 0 && (quiz.userAttemptCount !== undefined) && (quiz.userAttemptCount + 1) >= quiz.maxAttempts;
@@ -111,7 +120,7 @@ const QuizResult: React.FC<QuizResultProps> = ({ quiz, attempt }) => {
           if (!qId) return null;
           
           const selectedOptionId = getSelectedOption(qId);
-          const isCorrect = selectedOptionId === question.correctOptionId;
+          const isCorrect = selectedOptionId?.toString() === question.correctOptionId?.toString();
           
           return (
             <Card key={qId} className={`border-l-4 ${
@@ -133,21 +142,18 @@ const QuizResult: React.FC<QuizResultProps> = ({ quiz, attempt }) => {
                 <div className="space-y-2">
                   {question.options.map((option) => {
                     const optId = option.id || (option as { _id?: string })._id?.toString();
-                    const isSelected = selectedOptionId === optId;
-                    const isCorrectOption = optId === question.correctOptionId;
+                    const isSelected = selectedOptionId?.toString() === optId?.toString();
+                    const isCorrectOption = optId?.toString() === question.correctOptionId?.toString();
                     
                     let optionClass = 'border-slate-200';
                     let statusLabel: string | null = null;
 
                     if (isCorrectOption) {
                       optionClass = 'bg-green-100 border-green-500 text-green-900 font-medium ring-1 ring-green-500';
-                      statusLabel = "Correct Answer";
-                    } else if (isSelected && !isCorrectOption) {
+                      statusLabel = isSelected ? "Your Answer (Correct)" : "Correct Answer";
+                    } else if (isSelected) {
                       optionClass = 'bg-red-100 border-red-500 text-red-900 font-medium ring-1 ring-red-500';
                       statusLabel = "Your Answer (Incorrect)";
-                    } else if (isSelected) {
-                      // This part is actually covered by (isSelected && isCorrectOption) above but for safety:
-                      statusLabel = "Your Answer (Correct)";
                     }
                     
                     return (

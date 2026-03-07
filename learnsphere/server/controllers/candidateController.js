@@ -178,9 +178,9 @@ export const submitQuiz = async (req, res) => {
       const isCorrect = selectedOptionId && selectedOptionId.toString() === question.correctOptionId;
       if (isCorrect) score++;
       
-      return {
+        return {
         questionId: question._id,
-        selectedOptionId: selectedOptionId,
+        selectedAnswer: selectedOptionId,
         isCorrect: !!isCorrect
       };
     });
@@ -190,11 +190,7 @@ export const submitQuiz = async (req, res) => {
       quizId: quiz._id,
       score,
       totalQuestions: quiz.questions.length,
-      answers: answerDetails.map(a => ({
-        questionId: a.questionId,
-        selectedAnswer: a.selectedOptionId,
-        isCorrect: a.isCorrect
-      }))
+      answers: answerDetails
     });
 
     await attempt.save();
@@ -213,7 +209,7 @@ export const getQuizDetails = async (req, res) => {
     const quiz = await Quiz.findById(id)
       .populate({
         path: 'questions',
-        select: 'text options', // Include standard fields, exclude only sensitive if any
+        select: 'text options correctOptionId', // Include correct answer for results page
         options: { lean: true }
       })
       .lean();
@@ -222,14 +218,9 @@ export const getQuizDetails = async (req, res) => {
       return res.status(404).json({ error: 'Quiz not found' });
     }
     
-    // Check organization code lock
-    const admin = await User.findOne({ uid: quiz.createdBy });
-    
-    // If the admin has set a code, enforce it
-    if (admin && admin.organizationCode) {
-      if (admin.organizationCode !== code) {
-        return res.status(403).json({ error: 'Invalid or missing organization code' });
-      }
+    // Check quiz password lock
+    if (quiz.password && quiz.password !== code) {
+      return res.status(403).json({ error: 'Invalid or missing quiz password' });
     }
 
     // Structure questions with client-friendly IDs

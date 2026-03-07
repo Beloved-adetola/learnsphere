@@ -44,6 +44,11 @@ const CreateQuizForm: React.FC<CreateQuizFormProps> = ({
   const [category, setCategory] = useState<QuizCategory>((initialData?.category as QuizCategory) || 'Programming');
   const [isPublished, setIsPublished] = useState(initialData?.isPublished || false);
   const [maxAttempts, setMaxAttempts] = useState(initialData?.maxAttempts || 0);
+  const [password, setPassword] = useState(initialData?.password || '');
+  
+  // Time limit state (stored as minutes in DB, split into H/M in UI)
+  const [timeLimitHours, setTimeLimitHours] = useState(initialData?.timeLimit ? Math.floor(initialData.timeLimit / 60) : 0);
+  const [timeLimitMinutes, setTimeLimitMinutes] = useState(initialData?.timeLimit ? initialData.timeLimit % 60 : 0);
   
   // Questions state
   const [questions, setQuestions] = useState<Omit<Question, 'id'>[]>(
@@ -74,6 +79,9 @@ const CreateQuizForm: React.FC<CreateQuizFormProps> = ({
       setCategory((initialData.category as QuizCategory) || 'Programming');
       setIsPublished(initialData.isPublished || false);
       setMaxAttempts(initialData.maxAttempts || 0);
+      setPassword(initialData.password || '');
+      setTimeLimitHours(initialData.timeLimit ? Math.floor(initialData.timeLimit / 60) : 0);
+      setTimeLimitMinutes(initialData.timeLimit ? initialData.timeLimit % 60 : 0);
       
       if (initialData.questions && initialData.questions.length > 0) {
         setQuestions(
@@ -91,6 +99,8 @@ const CreateQuizForm: React.FC<CreateQuizFormProps> = ({
       setCategory('Programming');
       setIsPublished(false);
       setMaxAttempts(0);
+      setTimeLimitHours(0);
+      setTimeLimitMinutes(0);
       setQuestions([{
         text: '',
         options: [
@@ -217,6 +227,8 @@ const CreateQuizForm: React.FC<CreateQuizFormProps> = ({
         category,
         isPublished,
         maxAttempts,
+        password,
+        timeLimit: (timeLimitHours * 60) + timeLimitMinutes,
         questions: questions.map((q, qIndex) => ({
           id: `q${qIndex + 1}`,
           text: q.text,
@@ -253,6 +265,10 @@ const CreateQuizForm: React.FC<CreateQuizFormProps> = ({
         setDescription('');
         setCategory('Programming');
         setIsPublished(false);
+        setMaxAttempts(0);
+        setPassword('');
+        setTimeLimitHours(0);
+        setTimeLimitMinutes(0);
         setQuestions([
           {
             text: '',
@@ -353,6 +369,51 @@ const CreateQuizForm: React.FC<CreateQuizFormProps> = ({
                   value={maxAttempts}
                   onChange={(e) => setMaxAttempts(parseInt(e.target.value) || 0)}
                 />
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <Label>Time Limit</Label>
+                <div className="flex gap-4 items-end">
+                  <div className="flex-1 space-y-1">
+                    <Label htmlFor="hours" className="text-xs text-muted-foreground">Hours</Label>
+                    <Input
+                      id="hours"
+                      type="number"
+                      min="0"
+                      value={timeLimitHours}
+                      onChange={(e) => setTimeLimitHours(parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <Label htmlFor="minutes" className="text-xs text-muted-foreground">Minutes</Label>
+                    <Input
+                      id="minutes"
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={timeLimitMinutes}
+                      onChange={(e) => setTimeLimitMinutes(parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Leave as 0 for no time limit
+                </p>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="quizPassword">Quiz Password</Label>
+                <Input
+                  id="quizPassword"
+                  type="text"
+                  placeholder="Set a password for this quiz"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Students must enter this password to start the quiz.
+                </p>
               </div>
               
               <Button
