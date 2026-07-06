@@ -7,6 +7,7 @@ import {
   getQuizzes,
   updateQuiz,
   deleteQuiz,
+  getAdminAttempts,
 } from "../controllers/adminController.js";
 
 const router = express.Router();
@@ -20,6 +21,7 @@ router.post("/quizzes", authenticate, requireAdmin, createQuiz);
 router.get("/quizzes", authenticate, requireAdmin, getQuizzes);
 router.put("/quizzes/:id", authenticate, requireAdmin, updateQuiz);
 router.delete("/quizzes/:id", authenticate, requireAdmin, deleteQuiz);
+router.get("/attempts", authenticate, requireAdmin, getAdminAttempts);
 
 // Add this endpoint for admin check
 router.get("/check-status", (req, res) => {

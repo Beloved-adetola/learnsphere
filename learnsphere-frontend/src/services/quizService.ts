@@ -1,5 +1,5 @@
 import { Auth } from '@/config/firebase';
-import { Quiz, Question, QuizAttempt, QuizCategory } from '../types';
+import { Quiz, Question, QuizAttempt, QuizCategory, StudentAttemptInfo } from '../types';
 
 import { API_BASE_URL } from '@/config/api';
 
@@ -175,4 +175,12 @@ export const getQuizAttemptsByUser = async (userId: string): Promise<QuizAttempt
   } catch(error) {
      return [];
   }
+};
+
+export const getAdminStudentAttempts = async (): Promise<StudentAttemptInfo[]> => {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_BASE_URL}/admin/attempts`, { headers });
+  if (!response.ok) throw new Error('Failed to fetch student attempts');
+  const data = await response.json();
+  return data;
 };

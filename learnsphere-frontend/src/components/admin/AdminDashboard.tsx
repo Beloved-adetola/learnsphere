@@ -4,12 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { Plus, FilePlus, List, BarChart } from "lucide-react";
+import { Plus, FilePlus, List, BarChart, Award } from "lucide-react";
 import { Auth } from "@/config/firebase";
 import { Quiz, Question } from "@/types";
 import { getQuizzes } from "@/services/quizService";
 import AdminQuizList from "./AdminQuizList";
 import CreateQuizForm from "./CreateQuizForm";
+import StudentAttemptsList from "./StudentAttemptsList";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "@/config/api";
 
@@ -121,7 +122,7 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-4 w-full max-w-3xl">
+        <TabsList className="flex flex-wrap gap-2 w-full max-w-2xl h-auto p-1 bg-muted rounded-lg">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart size={16} />
             Overview
@@ -129,6 +130,10 @@ const AdminDashboard: React.FC = () => {
           <TabsTrigger value="quizzes" className="flex items-center gap-2" onClick={() => setActiveTab("quizzes")}>
             <List size={16} />
             My Quizzes
+          </TabsTrigger>
+          <TabsTrigger value="attempts" className="flex items-center gap-2" onClick={() => setActiveTab("attempts")}>
+            <Award size={16} />
+            Attempts
           </TabsTrigger>
           <TabsTrigger value="create" className="flex items-center gap-2" onClick={handleCreateTabClick}>
             <FilePlus size={16} />
@@ -142,7 +147,7 @@ const AdminDashboard: React.FC = () => {
           )}
           <TabsTrigger value="manage" className="flex items-center gap-2" onClick={() => setActiveTab("manage")}>
             <BarChart size={16} />
-            Manage Admin Account
+            Manage Account
           </TabsTrigger>
         </TabsList>
 
@@ -242,6 +247,10 @@ const AdminDashboard: React.FC = () => {
             onQuizUpdated={handleQuizUpdated}
             onEditQuiz={handleEditQuiz}
           />
+        </TabsContent>
+
+        <TabsContent value="attempts" className="mt-6">
+          <StudentAttemptsList quizzes={quizzes} />
         </TabsContent>
 
         <TabsContent value="create" className="mt-6">

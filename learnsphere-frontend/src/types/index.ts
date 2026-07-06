@@ -54,6 +54,22 @@ export interface QuizAttempt {
   quiz?: Quiz;
 }
 
+export interface StudentAttemptInfo {
+  _id: string;
+  userId: string;
+  quizId: string;
+  score: number;
+  totalQuestions: number;
+  attemptDate: Date | string;
+  studentEmail?: string;
+  quizTitle?: string;
+  answers: {
+    questionId: string;
+    selectedAnswer: string | null;
+    isCorrect: boolean;
+  }[];
+}
+
 export type QuizCategory = 
   | 'Programming'
   | 'Science'
