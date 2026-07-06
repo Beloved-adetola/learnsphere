@@ -39,8 +39,7 @@ console.log("Loaded FIREBASE_SERVICE_ACCOUNT:", !!process.env.FIREBASE_SERVICE_A
 const app = express();
 
 const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  "https://learnsphere-beta-ten.vercel.app"
+  process.env.FRONTEND_URL
 ].filter(Boolean);
 
 const corsOptions = {
@@ -64,7 +63,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options('/{*splat}', cors(corsOptions));
+// app.options('/{*splat}', cors(corsOptions));
 // Middleware
 app.use(express.json());
 
